@@ -1,0 +1,19 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.mybanner {
+    padding-top: 15pt;
+    margin-bottom: 10pt;
+    padding-bottom: 15pt;
+    font-size: 50px;
+    line-height: 1;
+    text-align: center;
+    background-color: rgb(58, 135, 178);
+    color: rgb(128, 255, 50);
+}
