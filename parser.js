@@ -73,7 +73,6 @@ function binarySearch(items, value){
     var startIndex  = 0,
         stopIndex   = items.length - 1,
         middle      = Math.floor((stopIndex + startIndex)/2);
-    debugger;
     while(items[middle]['word'] != value && startIndex < stopIndex){
 
         //adjust search area
@@ -92,10 +91,47 @@ function binarySearch(items, value){
     return (items[middle]['word'] != value) ? -1 : middle;
 }
 
-// Sort indexes, the idx file already in order.
-// http://code.google.com/p/babiloo/wiki/StarDict_format
-// bubbleSort(indexes);
+/**
+ * a responsive function of 'typeahead' control on UI
+ * @param {items} array of dict index.
+ * @param {prefix} the characters user has already typed in the control
+ * @return {int} the index of first matching word
+ */
+function exploreBinarySearch(items, prefix){
+    //binary search first
+    var startIndex = 0,
+        stopIndex = items.length - 1,
+        middle = Math.floor((stopIndex + startIndex)/2);
+    while(!match(items[middle]['word'], prefix) && startIndex < stopIndex){
+        // adjust search area
+        var middlePrefix = items[middle]['word'].substr(0, items[middle]['word'].length > prefix.length ? prefix.length : items[middle]['word'].length);
+        if (prefix < middlePrefix){
+            stopIndex = middle - 1;
+        }else if (prefix > middlePrefix){
+            startIndex = middle + 1;
+        }
 
+        // recalculate middle
+        middle = Math.floor((stopIndex + startIndex)/2);
+        if (typeof items[middle] === undefined || null == items[middle]) return -1;
+    }
+
+    // Now, the middle one matches with the prefix.
+    var exploreIndex = middle;
+    // there are multiple matching words backward, iterate matching backward
+    while(exploreIndex >=0 && match(items[exploreIndex]['word'], prefix)){
+        exploreIndex --;
+    }
+
+    if (exploreIndex + 1 >= 0) return exploreIndex + 1;
+
+    return -1;
+}
+
+function match(item, prefix){
+    var pattern = new RegExp('^'+prefix+'.*$', 'gi');
+    return pattern.test(item);
+}
     
 function lookupRaw(toBeTranslated, fromLang, toLang) {
     if (typeof toBeTranslated === undefined || null == toBeTranslated || toBeTranslated.trim() == '') return '';
@@ -117,7 +153,11 @@ function lookupRaw(toBeTranslated, fromLang, toLang) {
 }
 
 /**
- * return an array of LookupResponse
+ * 
+ * @param {toBeTranslated} the word to be translated
+ * @param {formLang} source language
+ * @param {toLang} target language, like 'zh','en'
+ * @return {String} spliced results
  */
 exports.lookup = function (toBeTranslated, fromLang, toLang) {
     //TODO: format the raw content
@@ -130,4 +170,49 @@ exports.lookup = function (toBeTranslated, fromLang, toLang) {
     return formatted;
 }
 
+/**
+ * prefetch some matching words
+ * @param {prefix} the characters user inputs in the typeahead control
+ * @param {amount} how many matching words should be returned, note: it's possible the returned array size is less than the amount.
+ * @param {fromLang}
+ * @param {toLang}
+ * @return {array}
+ */
+exports.prefetch = function (prefix, amount, fromLang, toLang) {
+    if (typeof prefix === undefined || null == prefix || prefix.trim() == '') return [];
+    var lookingDicts = dicts[fromLang + '2' + toLang],
+        results = [];
+    lookingDicts.forEach(function (dictMeta){
+        var pos = exploreBinarySearch(dictMeta.indexes, prefix),
+            subresult = [];
+        if (pos != -1){
+            // fetch a chunk
+            for (var i=pos; i<pos + amount && i<dictMeta.indexes.length - 1 && match(dictMeta.indexes[pos].word, prefix); i++){
+                var item = dictMeta.indexes[i];
+                //TODO: return a brief translated content also?
+                
+                subresult.push(item.word);
+            }
+        }
+        Array.prototype.push.apply(results, subresult);
+    });
 
+    // now results contains matching words from multiple dictionary, need merge then sort them
+    // remove duplicated one
+    debugger;
+    for (var i=0; i<results.length; i++){
+        for (var w=i+1; w<results.length; w++){
+            if (results[i] == results[w]){
+                results.splice(w, 1);
+                w--;
+            }
+        }
+    }
+
+    results.sort(function(a, b){
+        return a > b;
+    });
+
+    return results;
+
+}
