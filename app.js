@@ -5,8 +5,9 @@
 
 var express = require('express'),
     routes = require('./routes'),
-    parser = require('./parser'),
-    fs = require('fs');
+    parser = require('./services/parser'),
+    fs = require('fs'),
+    db = require('./services/db');
 
 var dictPath = process.cwd() + '/dicts',
     dirs = fs.readdirSync(dictPath);
@@ -36,6 +37,12 @@ dirs.forEach(function(dir){
             }
         }
 });
+
+// Initialize Database
+console.log('Start initializing Database....');
+db.initDB();
+
+
 
 
 var app = module.exports = express.createServer();

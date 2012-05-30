@@ -1,10 +1,13 @@
 h1.mybanner Shining Dict
-div.container
+.container
     #search_box.row-fluid
-        form.well.form-search(action="/lookup",method='post') 
+        form#search_form.well.form-search 
             input#search_word.input-xxlarge.search-query(name='word',placeholder='your word')
             &nbsp;&nbsp;
-            button.btn(type='submit') Lookup
+            button.btn(type="submit",onclick="javascript:search();") Lookup
+            &nbsp;&nbsp;
+            button#added_flag.btn(type="button",onclick="javascript:remember();") Add
+.container
     #translated_content.span10
         p.
             !{results}
