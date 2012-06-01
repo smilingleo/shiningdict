@@ -9,13 +9,14 @@ var DB_SCHEMA = 'dict',
     T_USER = 't_user',
     T_NEW_WORD = 't_new_word',
     T_COMMENT = 't_comment';
-/*
-* Create database and tables if not exists, and then use that database
-*/
 
-exports.initDB = function (){
+var DAO = {
+    /*
+    * Create database and tables if not exists, and then use that database
+    */
+    initDB : function (){
 
-    client.query("CREATE DATABASE IF NOT EXISTS " + DB_SCHEMA, function(err) {
+        client.query("CREATE DATABASE IF NOT EXISTS " + DB_SCHEMA, function(err) {
             if (err) {
                 console.log("Can't create database, because: " + err);
                 return;
@@ -53,31 +54,44 @@ exports.initDB = function (){
                 console.log("\tTable " + T_NEW_WORD + " was created!");
             });
 
-    });
+        });
+    },
 
+    /*
+    * add one new word
+    * @param username 
+    * @param new_word : new word to be added
+    * @param callback : callback to execute if the word was added or not.
+    */
+    rememberNewWord : function(username, new_word, callback){
+        console.log('going to add ' + username + ',' + new_word);
+        client.query("INSERT INTO " + T_NEW_WORD + "(username, new_word, added_on) values(?,?,?)",
+            [username, new_word, new Date()], callback
+        );
+    },
+
+    /*
+    * check if this word is already added to username's book
+    * @param username
+    * @param new_word
+    * @param callback : since nodejs is all async, we have to passed in a callback function from web layer.
+    */
+    checkAdded : function(username, new_word, callback){
+        console.log('checking:' + new_word + ' for ' + username);
+        client.query("SELECT new_word FROM " + T_NEW_WORD + " WHERE username=? AND new_word=?",
+            [username, new_word], callback);
+    },
+
+    /*
+    * login to system 
+    * @param username
+    * @param password signed password
+    * @param callback
+    * @return true: if succeed, false: if not
+    */
+    checkLogin : function(username, password, callback){
+        client.query("select * from " + T_USER + " where username=? and passwd=?", [username, password], callback);
+    }
 }
 
-/*
-* add one new word
-* @username 
-* @new_word : new word to be added
-* @callback : callback to execute if the word was added or not.
-*/
-exports.rememberNewWord = function(username, new_word, callback){
-    console.log('going to add ' + username + ',' + new_word);
-    client.query("INSERT INTO " + T_NEW_WORD + "(username, new_word, added_on) values(?,?,?)",
-        [username, new_word, new Date()], callback
-    );
-}
-
-/*
-* check if this word is already added to username's book
-* @username
-* @new_word
-* @callback : since nodejs is all async, we have to passed in a callback function from web layer.
-*/
-exports.checkAdded = function(username, new_word, callback){
-    console.log('checking:' + new_word + ' for ' + username);
-    client.query("SELECT new_word FROM " + T_NEW_WORD + " WHERE username=? AND new_word=?",
-        [username, new_word], callback);
-}
+module.exports = DAO;

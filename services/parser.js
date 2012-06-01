@@ -7,59 +7,125 @@ var fs = require('fs'),
         'zh2en' : []
     }
 
+var Parser = {
 
-exports.loadDictSync = function (ifoFile, idxFile, dictFile, fromLang, toLang) { 
-    var fd = fs.openSync(ifoFile, 'r'),
-        info = fs.readFileSync(ifoFile, 'UTF-8'),
-        lines = info.split('\n'),
-        nameLine = lines.filter(function(line){ return line.substr(0,8) == 'bookname'; }),
-        dictName = nameLine[0].substring(9),
-        entireFileBuffer = fs.readFileSync(idxFile),
-        
-        wordBytes = new Array(),
-        isWord = true,
-        isOffset = false,
-        isLength = false,
-        oneWord, offset, length, indexes = [];
-    for (var i=0; i<entireFileBuffer.length; i++){
-        if (isWord){
-            if (entireFileBuffer[i] != 0){
-                wordBytes.push(entireFileBuffer[i]);
-            }else{
-                oneWord = (new Buffer(wordBytes)).toString('utf8');
-                isWord = false;
-                isOffset = true;
+    loadDictSync : function (ifoFile, idxFile, dictFile, fromLang, toLang) { 
+        var fd = fs.openSync(ifoFile, 'r'),
+            info = fs.readFileSync(ifoFile, 'UTF-8'),
+            lines = info.split('\n'),
+            nameLine = lines.filter(function(line){ return line.substr(0,8) == 'bookname'; }),
+            dictName = nameLine[0].substring(9),
+            entireFileBuffer = fs.readFileSync(idxFile),
+            
+            wordBytes = new Array(),
+            isWord = true,
+            isOffset = false,
+            isLength = false,
+            oneWord, offset, length, indexes = [];
+        for (var i=0; i<entireFileBuffer.length; i++){
+            if (isWord){
+                if (entireFileBuffer[i] != 0){
+                    wordBytes.push(entireFileBuffer[i]);
+                }else{
+                    oneWord = (new Buffer(wordBytes)).toString('utf8');
+                    isWord = false;
+                    isOffset = true;
+                    isLength = false;
+                }
+            }
+
+            if (isOffset){
+                // i is the position of \0
+                offset = entireFileBuffer.readUInt32BE(i+1);
+                isOffset = false;
+                isLength = true;
+            }
+
+            if (isLength){
+                length = entireFileBuffer.readUInt32BE(i+5);
                 isLength = false;
+                isWord = true;
+                i += 8;
+                //console.log('offset:' + offset);
+                //console.log('length:' + length);
+
+                var idx = new DictClass.WordIndex(oneWord, offset, length);
+                wordBytes = new Array();
+                indexes.push(idx);
+            }
+        }
+        
+        // To parse dict file, first of all, gunzip -S .dz xxxx.dict.dz
+        var dictBuffer = fs.readFileSync(dictFile); // read as buffer
+        
+        var dictMeta = new DictClass.DictMeta(dictName, fromLang, toLang, indexes, dictBuffer);
+        // add to proper array list
+        dicts[fromLang + '2' + toLang].push(dictMeta);
+    },
+    /**
+     * 
+     * @param {toBeTranslated} the word to be translated
+     * @param {formLang} source language
+     * @param {toLang} target language, like 'zh','en'
+     * @return {String} spliced results
+     */
+    lookup : function (toBeTranslated, fromLang, toLang) {
+        //TODO: format the raw content
+        var results = lookupRaw(toBeTranslated, fromLang, toLang);
+        var formatted = '';
+        for (var resp in results){
+            formatted += results[resp].dictName + '<br/>';
+            formatted += results[resp].rawContent + '<br/><br/>';
+        }
+        return formatted;
+    },
+
+    /**
+     * prefetch some matching words
+     * @param {prefix} the characters user inputs in the typeahead control
+     * @param {amount} how many matching words should be returned, note: it's possible the returned array size is less than the amount.
+     * @param {fromLang}
+     * @param {toLang}
+     * @return {array}
+     */
+    prefetch : function (prefix, amount, fromLang, toLang) {
+        if (typeof prefix === undefined || null == prefix || prefix.trim() == '') return [];
+        var lookingDicts = dicts[fromLang + '2' + toLang],
+            results = [];
+        lookingDicts.forEach(function (dictMeta){
+            var pos = exploreBinarySearch(dictMeta.indexes, prefix),
+                subresult = [];
+            if (pos != -1){
+                // fetch a chunk
+                for (var i=pos; i<pos + amount && i<dictMeta.indexes.length - 1 && match(dictMeta.indexes[pos].word, prefix); i++){
+                    var item = dictMeta.indexes[i];
+                    //TODO: return a brief translated content also?
+                    
+                    subresult.push(item.word);
+                }
+            }
+            Array.prototype.push.apply(results, subresult);
+        });
+
+        // now results contains matching words from multiple dictionary, need merge then sort them
+        // remove duplicated one
+        debugger;
+        for (var i=0; i<results.length; i++){
+            for (var w=i+1; w<results.length; w++){
+                if (results[i] == results[w]){
+                    results.splice(w, 1);
+                    w--;
+                }
             }
         }
 
-        if (isOffset){
-            // i is the position of \0
-            offset = entireFileBuffer.readUInt32BE(i+1);
-            isOffset = false;
-            isLength = true;
-        }
+        results.sort(function(a, b){
+            return a > b;
+        });
 
-        if (isLength){
-            length = entireFileBuffer.readUInt32BE(i+5);
-            isLength = false;
-            isWord = true;
-            i += 8;
-            //console.log('offset:' + offset);
-            //console.log('length:' + length);
+        return results;
 
-            var idx = new DictClass.WordIndex(oneWord, offset, length);
-            wordBytes = new Array();
-            indexes.push(idx);
-        }
     }
-    
-    // To parse dict file, first of all, gunzip -S .dz xxxx.dict.dz
-    var dictBuffer = fs.readFileSync(dictFile); // read as buffer
-    
-    var dictMeta = new DictClass.DictMeta(dictName, fromLang, toLang, indexes, dictBuffer);
-    // add to proper array list
-    dicts[fromLang + '2' + toLang].push(dictMeta);
 }
 
 /**
@@ -155,67 +221,4 @@ function lookupRaw(toBeTranslated, fromLang, toLang) {
     return results;
 }
 
-/**
- * 
- * @param {toBeTranslated} the word to be translated
- * @param {formLang} source language
- * @param {toLang} target language, like 'zh','en'
- * @return {String} spliced results
- */
-exports.lookup = function (toBeTranslated, fromLang, toLang) {
-    //TODO: format the raw content
-    var results = lookupRaw(toBeTranslated, fromLang, toLang);
-    var formatted = '';
-    for (var resp in results){
-        formatted += results[resp].dictName + '<br/>';
-        formatted += results[resp].rawContent + '<br/><br/>';
-    }
-    return formatted;
-}
-
-/**
- * prefetch some matching words
- * @param {prefix} the characters user inputs in the typeahead control
- * @param {amount} how many matching words should be returned, note: it's possible the returned array size is less than the amount.
- * @param {fromLang}
- * @param {toLang}
- * @return {array}
- */
-exports.prefetch = function (prefix, amount, fromLang, toLang) {
-    if (typeof prefix === undefined || null == prefix || prefix.trim() == '') return [];
-    var lookingDicts = dicts[fromLang + '2' + toLang],
-        results = [];
-    lookingDicts.forEach(function (dictMeta){
-        var pos = exploreBinarySearch(dictMeta.indexes, prefix),
-            subresult = [];
-        if (pos != -1){
-            // fetch a chunk
-            for (var i=pos; i<pos + amount && i<dictMeta.indexes.length - 1 && match(dictMeta.indexes[pos].word, prefix); i++){
-                var item = dictMeta.indexes[i];
-                //TODO: return a brief translated content also?
-                
-                subresult.push(item.word);
-            }
-        }
-        Array.prototype.push.apply(results, subresult);
-    });
-
-    // now results contains matching words from multiple dictionary, need merge then sort them
-    // remove duplicated one
-    debugger;
-    for (var i=0; i<results.length; i++){
-        for (var w=i+1; w<results.length; w++){
-            if (results[i] == results[w]){
-                results.splice(w, 1);
-                w--;
-            }
-        }
-    }
-
-    results.sort(function(a, b){
-        return a > b;
-    });
-
-    return results;
-
-}
+module.exports = Parser;

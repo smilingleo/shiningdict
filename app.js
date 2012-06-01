@@ -7,6 +7,8 @@ var express = require('express'),
     routes = require('./routes'),
     parser = require('./services/parser'),
     fs = require('fs'),
+    cookies = require('cookies'),
+    keys = require('keygrip')(['Rourou', 'shining', 'Liu']),
     db = require('./services/db');
 
 var dictPath = process.cwd() + '/dicts',
@@ -32,6 +34,7 @@ dirs.forEach(function(dir){
                 var idxFile = findFile(subdir, files, 'idx'),
                 dictFile = findFile(subdir, files, 'dict');
                 // TODO: how to automatically determine the language?
+                debugger;
                 parser.loadDictSync(subdir + '/' + infoFile, subdir + '/' + idxFile, subdir + '/' + dictFile, 'zh', 'en');
                 console.log('\t' + idxFile + ' loaded!');
             }
@@ -52,7 +55,11 @@ var app = module.exports = express.createServer();
 app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
+  app.use(express.logger('short'));
   app.use(express.bodyParser());
+  //app.use(express.cookieParser('rourou_liu K3C'));
+  //app.use(express.cookieSession({ cookie: { maxAge: 60*1000*1000 } });
+  app.use(cookies.express(keys));
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
