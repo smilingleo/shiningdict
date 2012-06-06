@@ -1,0 +1,23 @@
+h1 Sign up / in
+.container
+    form#loginForm.well.span4(action='/login',method='post')
+        fieldset
+            legend Login Form
+            .control-group
+                label.control-label Username:
+                .controls
+                    input#username.span3(name='username',placeholder='your username')
+            .control-group
+                label.control-label Password:
+                .controls
+                    input#password.span3(name='password',type='password',placeholder='your password')
+            .control-group
+                .controls
+                    button#loginBtn.btn(type="submit") Login
+                    button#signUpBtn.btn(type="button",onclick="javascript:signup();") Signup
+          - if (typeof errMsg !== undefined && errMsg)
+            .control-group
+                .controls
+                    #errMsg.alert.alert-error 
+                        p.
+                            !{errMsg}
