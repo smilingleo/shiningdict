@@ -3,7 +3,8 @@ var mysql = require('mysql'),
         host: 'localhost',
         user: 'root',
         password: ''
-    });
+    }),
+    keys = require('../util/util').keys;
 
 var DB_SCHEMA = 'dict',
     T_USER = 't_user',
@@ -28,8 +29,7 @@ var DAO = {
 
             // create user table if not exists
             client.query("CREATE TABLE IF NOT EXISTS " + T_USER + " ("
-                + "id bigint not null primary key,"
-                + "username varchar(100) not null,"
+                + "username varchar(50) not null primary key,"
                 + "passwd varchar(100) not null,"
                 + "last_login datetime not null"
                 + ")", function(err) {
@@ -66,7 +66,7 @@ var DAO = {
     rememberNewWord : function(username, new_word, callback){
         console.log('going to add ' + username + ',' + new_word);
         client.query("INSERT INTO " + T_NEW_WORD + "(username, new_word, added_on) values(?,?,?)",
-            [username, new_word, new Date()], callback
+            [username, new_word, (new Date()).toISOString()], callback
         );
     },
 
@@ -86,11 +86,22 @@ var DAO = {
     * login to system 
     * @param username
     * @param password signed password
-    * @param callback
+    * @param callback(err, results, fields)
     * @return true: if succeed, false: if not
     */
     checkLogin : function(username, password, callback){
         client.query("select * from " + T_USER + " where username=? and passwd=?", [username, password], callback);
+    },
+
+    /**
+    * Create an user, aka, sign up a new user
+    * If the user with same username has already existed, throw an error
+    * @param username
+    * @param password
+    * @param callback
+    */
+    createUser : function(username, password, callback){
+        client.query("insert into " + T_USER + " values(?,?,?)", [username, keys.sign(password), (new Date()).toISOString()], callback);
     }
 }
 

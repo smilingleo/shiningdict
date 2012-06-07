@@ -1,12 +1,26 @@
+div.navbar.pull-right
+    - if (login)
+        span.label.label-success Welcome
+        span#lb_user.label.label-success(style="color:yellow;") !{login}
+        a(href="/logout")
+            span.label.label-success
+                em Logout
+    - else
+        a(href="/login")
+            span.label.label-success Login
 h1.mybanner Shining Dict
 .container
     #search_box.row-fluid
         form#search_form.well.form-search 
             input#search_word.input-xxlarge.search-query(name='word',placeholder='your word')
             &nbsp;&nbsp;
-            button.btn(type="submit",onclick="javascript:search();") Lookup
+            button.btn(type="submit") Lookup
             &nbsp;&nbsp;
-            button#added_flag.btn(type="button",onclick="javascript:remember();") Add
+            - if (login)
+                  button#added_flag.btn.btn-success(type="button",onclick="javascript:remember();") Add
+            - else
+                  button#added_flag.btn.disabled(type="button",disabled) Add
+
 .container
     #translated_content.span10
         p.

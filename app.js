@@ -8,7 +8,7 @@ var express = require('express'),
     parser = require('./services/parser'),
     fs = require('fs'),
     cookies = require('cookies'),
-    keys = require('keygrip')(['Rourou', 'shining', 'Liu']),
+    keys = require('./util/util').keys,
     db = require('./services/db');
 
 var dictPath = process.cwd() + '/dicts',
@@ -34,7 +34,6 @@ dirs.forEach(function(dir){
                 var idxFile = findFile(subdir, files, 'idx'),
                 dictFile = findFile(subdir, files, 'dict');
                 // TODO: how to automatically determine the language?
-                debugger;
                 parser.loadDictSync(subdir + '/' + infoFile, subdir + '/' + idxFile, subdir + '/' + dictFile, 'zh', 'en');
                 console.log('\t' + idxFile + ' loaded!');
             }

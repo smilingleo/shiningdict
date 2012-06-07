@@ -4,7 +4,7 @@
 function search(){
     var word = getCurrentWord();
     $.get('/lookup/'+word, function(data){
-        //alert(data);
+        
         $('#translated_content > p')[0].innerHTML = data.content; // $('xxx') return an array
 
         // Focus on the input and select original word
@@ -12,9 +12,8 @@ function search(){
         $('#search_word')[0].select();
 
         //check if the word has already been added or not
-        //TODO: TO GET CURRENT USERNAME
-        var user = 'test';
-        $.get('/checkNewWord/' + user + '/' + word, changeAddedFlag);
+        if ($('#lb_user')[0].innerHTML)
+            $.get('/checkNewWord/' + word, changeAddedFlag);
     });
 }
 
@@ -26,6 +25,18 @@ function remember(){
     var word = getCurrentWord();
     //alert(word + " was added to new book!");
     $.post('/addnew/' + word, changeAddedFlag);
+}
+
+/**
+* Get username & password and post to server
+*/
+function signup(){
+    var username = $('#username')[0].value,
+        password = $('#password')[0].value;
+
+    $('#loginForm')[0].action = "/signup";
+
+    $('#loginForm')[0].submit();
 }
 
 ////////////////////////////////////////////////////////////
