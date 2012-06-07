@@ -23,12 +23,13 @@ module.exports = function (app) {
                 // the cookie is not tampered.
                 if (keys.verify(username, signedUsername) && keys.verify(lastLogin, signedLastLogin)){
                     var intervalInMills = (new Date()).getTime() - Date.parse(lastLogin);
-                    if (intervalInMills < 30*60*1000)
+                    if (intervalInMills < 30*60*1000){
                         req.user = username;
                         // refresh client cookies' timestamp
                         res.cookies.set("ShiningSession", generateUserSession(username)); 
-                    else
+                    }else{
                         console.log('The userSession of ' + username + " was expired!!");
+                    }
                 }else{
                     console.log('The userSession of ' + username + " was tampered");
                 }
