@@ -1,12 +1,20 @@
-var mysql = require('mysql'),
-    client = mysql.createClient({
+if(process.env.VCAP_SERVICES){
+    var env = JSON.parse(process.env.VCAP_SERVICES);
+    var sql_options = env['mysql-5.1'][0]['credentials'];
+    var schema = sql_options.name;
+}else{
+    var sql_options = {
         host: 'localhost',
         user: 'root',
         password: ''
-    }),
+    }, schema = 'dict';
+    
+}
+var mysql = require('mysql'),
+    client = mysql.createClient(sql_options),
     keys = require('../util/util').keys;
 
-var DB_SCHEMA = 'dict',
+var DB_SCHEMA = schema,
     T_USER = 't_user',
     T_NEW_WORD = 't_new_word',
     T_COMMENT = 't_comment';
@@ -16,23 +24,13 @@ var DAO = {
     * Create database and tables if not exists, and then use that database
     */
     initDB : function (){
-
-        client.query("CREATE DATABASE IF NOT EXISTS " + DB_SCHEMA, function(err) {
-            if (err) {
-                console.log("Can't create database, because: " + err);
-                return;
-            }
-            console.log("\tDatabase " + DB_SCHEMA + " was created!");
-
-            client.query("use " + DB_SCHEMA);
-            client.database = DB_SCHEMA;
-
+        function createTables() {
             // create user table if not exists
             client.query("CREATE TABLE IF NOT EXISTS " + T_USER + " ("
                 + "username varchar(50) not null primary key,"
                 + "passwd varchar(100) not null,"
                 + "last_login datetime not null"
-                + ")", function(err) {
+            + ")", function(err) {
                 if (err) {
                     console.log("Can't create table " + T_USER + ", because: " + err);
                     return;
@@ -46,13 +44,26 @@ var DAO = {
                 + "new_word varchar(200) not null,"
                 + "added_on datetime not null,"
                 + "primary key (username, new_word)"
-                + ")", function(err) {
+            + ")", function(err) {
                 if (err) {
                     console.log("Can't create table " + T_NEW_WORD + ", because: " + err);
                     return;
                 }
                 console.log("\tTable " + T_NEW_WORD + " was created!");
             });
+        }
+
+        client.query("CREATE DATABASE IF NOT EXISTS " + DB_SCHEMA, function(err) {
+            if (err) {
+                console.log("Can't create database, because: " + err);
+                return;
+            }
+            console.log("\tDatabase " + DB_SCHEMA + " was created!");
+
+            client.query("use " + DB_SCHEMA);
+            client.database = DB_SCHEMA;
+
+            createTables();
 
         });
     },
