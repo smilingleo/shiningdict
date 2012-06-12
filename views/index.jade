@@ -17,9 +17,13 @@ h1.mybanner Shining Dict
             button.btn(type="submit") Lookup
             &nbsp;&nbsp;
             - if (login)
-                  button#added_flag.btn.btn-success(type="button",onclick="javascript:remember();") Add
+                  //- button#added_flag.btn.btn-success(type="button",onclick="javascript:remember();") Add
+                  a.btn.btn-success(onclick="javascript:remember();")
+                      i#added_flag.icon-plus
             - else
-                  button#added_flag.btn.disabled(type="button",disabled) Add
+                  /- button#added_flag.btn.disabled(type="button",disabled) Add
+                  a.btn.btn-success
+                      i#added_flag.icon-plus
 
 .container
     #translated_content.span10

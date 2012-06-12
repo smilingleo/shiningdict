@@ -53,9 +53,9 @@ function getCurrentWord(){
 */
 function changeAddedFlag(data){
     if (data.added)
-        $('#added_flag')[0].innerHTML = 'Done';
+        $('#added_flag')[0].className ='icon-minus';
     else
-        $('#added_flag')[0].innerHTML = 'Add';
+        $('#added_flag')[0].className ='icon-plus';
 
 }
 
