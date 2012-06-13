@@ -12,7 +12,6 @@ module.exports = function (app) {
     */
     function validateUserSession(req, res, next){
         var userSession = req.cookies.get('ShiningSession');
-        debugger;
         if (userSession){
             var tokens = userSession.split('##');
             if (tokens && tokens.length == 2){
@@ -23,7 +22,7 @@ module.exports = function (app) {
                 // the cookie is not tampered.
                 if (keys.verify(username, signedUsername) && keys.verify(lastLogin, signedLastLogin)){
                     var intervalInMills = (new Date()).getTime() - Date.parse(lastLogin);
-                    if (intervalInMills < 30*60*1000){
+                    if (intervalInMills < 8*60*60*1000){
                         req.user = username;
                         // refresh client cookies' timestamp
                         res.cookies.set("ShiningSession", generateUserSession(username)); 
@@ -34,8 +33,11 @@ module.exports = function (app) {
                     console.log('The userSession of ' + username + " was tampered");
                 }
             }
+            next(); 
+        }else{
+            // no user session here, user's accessing the resource protected without login
+            res.render('login', {title: 'You are accessing a protected page, please login first.' });
         }
-        next(); 
     }
 
     // URL to redirect to login page.
@@ -137,6 +139,27 @@ module.exports = function (app) {
             }
 
         }); 
+    });
+
+    app.get('/book', validateUserSession, function(req, res){
+        var username = req.user;
+        db.getNewWords(username, function(err, results, fields){
+            if (err){
+                console.log('Error: get new words for user:' + username + ", " + err);
+                throw err;
+            }
+            
+            debugger;
+
+            function buildJSONBook(db_results){
+                // results format: <new_word, added_on>
+                return db_results;
+            }
+
+            var js_newWords = buildJSONBook(results);
+
+            res.render('book', {title: username + "'s New Word Book", 'js_newWords': js_newWords });
+        });
     });
 };
 

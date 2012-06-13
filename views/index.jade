@@ -1,9 +1,15 @@
 div.navbar.pull-right
     - if (login)
         span.label.label-success Welcome
+        i.icon-user
         span#lb_user.label.label-success(style="color:yellow;") !{login}
+        a(href="/book")
+            span.label.label-success
+                i.icon-book
+                em My Book
         a(href="/logout")
             span.label.label-success
+                i.icon-off
                 em Logout
     - else
         a(href="/login")
@@ -17,11 +23,9 @@ h1.mybanner Shining Dict
             button.btn(type="submit") Lookup
             &nbsp;&nbsp;
             - if (login)
-                  //- button#added_flag.btn.btn-success(type="button",onclick="javascript:remember();") Add
                   a.btn.btn-success(onclick="javascript:remember();")
                       i#added_flag.icon-plus
             - else
-                  /- button#added_flag.btn.disabled(type="button",disabled) Add
                   a.btn.btn-success
                       i#added_flag.icon-plus
 

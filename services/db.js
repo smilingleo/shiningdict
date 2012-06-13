@@ -113,7 +113,17 @@ var DAO = {
     */
     createUser : function(username, password, callback){
         client.query("insert into " + T_USER + " values(?,?,?)", [username, keys.sign(password), (new Date()).toISOString()], callback);
+    },
+
+    /**
+     * To get all new words the user added
+     * @param username
+     * @param callback
+     */
+    getNewWords : function(username, callback){
+        client.query("select new_word, added_on from " + T_NEW_WORD + " where username =?", [username], callback);
     }
+
 }
 
 module.exports = DAO;
