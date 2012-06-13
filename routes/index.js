@@ -36,7 +36,7 @@ module.exports = function (app) {
             next(); 
         }else{
             // no user session here, user's accessing the resource protected without login
-            res.render('login', {title: 'You are accessing a protected page, please login first.' });
+            res.render('login', {title: 'You are accessing a protected page, please login first.', errMsg:'' });
         }
     }
 
