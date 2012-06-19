@@ -33,16 +33,13 @@ module.exports = function (app) {
                     console.log('The userSession of ' + username + " was tampered");
                 }
             }
-            next(); 
-        }else{
-            // no user session here, user's accessing the resource protected without login
-            res.render('login', {title: 'You are accessing a protected page, please login first.', errMsg:'' });
         }
+        next(); 
     }
 
     // URL to redirect to login page.
     app.get('/login', function(req, res){
-        res.render('login', { title: 'Sign up / in', errMsg: '' });
+        res.render('login', { title: 'Sign up / in', errMsg: '', login: req.user });
     });
 
     app.get('/logout', function(req, res){
@@ -62,7 +59,7 @@ module.exports = function (app) {
                 res.redirect('/');
             }else{
                 //TODO: Don't flash the page and fill the username.
-                res.render('login', {title:'Sign up /in' , errMsg:'Unmatched username and password!'});
+                res.render('login', {title:'Sign up /in' , errMsg:'Unmatched username and password!', login: req.user });
             }
         });
     });
@@ -74,7 +71,7 @@ module.exports = function (app) {
         db.createUser(username, password, function(err){
             if (err){
                 console.log(err.toString());
-                res.render('login', {title:'Sign up /in' , errMsg:err.toString()});
+                res.render('login', {title:'Sign up /in' , errMsg:err.toString(), login:req.user});
                 return;
             }
 
@@ -103,7 +100,7 @@ module.exports = function (app) {
         var word = req.param('word'),
             username = req.user;    
         if (typeof username === undefined || null == username){
-            res.render('login', {title: 'Sign in / up' });
+            res.render('login', {title: 'Sign in / up' , login:req.user});
         }
         db.rememberNewWord(username, word, function(err){
             var succeeded = true;
@@ -122,7 +119,7 @@ module.exports = function (app) {
             username = req.user;    
 
         if (typeof username === undefined || null == username){
-            res.render('login', {title: 'Sign in / up' });
+            res.render('login', {title: 'Sign in / up', login:req.user });
             return;
         }
 
@@ -158,7 +155,7 @@ module.exports = function (app) {
 
             var js_newWords = buildJSONBook(results);
 
-            res.render('book', {title: username + "'s New Word Book", 'js_newWords': js_newWords });
+            res.render('book', {title: username + "'s New Word Book", 'js_newWords': js_newWords, results:'', login:req.user });
         });
     });
 };

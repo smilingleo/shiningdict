@@ -7,4 +7,22 @@ html
     script(src='/javascripts/jquery-1.7.1.js') 
     script(src='/javascripts/bootstrap-typeahead.js') 
     script(src='/javascripts/shiningdict.js') 
-  body!= body
+  body
+  div.navbar.pull-right
+    - if (login)
+        span.label.label-success Welcome
+        i.icon-user
+        span#lb_user.label.label-success(style="color:yellow;") !{login}
+        a(href="/book")
+            span.label.label-success
+                i.icon-book
+                em My Book
+        a(href="/logout")
+            span.label.label-success
+                i.icon-off
+                em Logout
+    - else
+        a(href="/login")
+            span.label.label-success Login
+  h1.mybanner Shining Dict
+  != body

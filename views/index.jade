@@ -1,20 +1,3 @@
-div.navbar.pull-right
-    - if (login)
-        span.label.label-success Welcome
-        i.icon-user
-        span#lb_user.label.label-success(style="color:yellow;") !{login}
-        a(href="/book")
-            span.label.label-success
-                i.icon-book
-                em My Book
-        a(href="/logout")
-            span.label.label-success
-                i.icon-off
-                em Logout
-    - else
-        a(href="/login")
-            span.label.label-success Login
-h1.mybanner Shining Dict
 .container
     #search_box.row-fluid
         form#search_form.well.form-search 
@@ -26,7 +9,7 @@ h1.mybanner Shining Dict
                   a.btn.btn-success(onclick="javascript:remember();")
                       i#added_flag.icon-plus
             - else
-                  a.btn.btn-success
+                  a.btn
                       i#added_flag.icon-plus
 
 .container

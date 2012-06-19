@@ -1,3 +1,11 @@
 //- js_newWords is an array, format: <new_word, added_on>
-each js_word in js_newWords
-    li #{js_word['new_word']} added on #{js_word['added_on'].toString()}
+div.tabbable.tabs-left
+    ul#myTab.nav.nav-tabs
+        each js_word in js_newWords
+            li
+                a(href="javascript:search(\'#{js_word['new_word']}\');") #{js_word['new_word']} 
+    div#translated_content.tab-content
+        p
+            !{results}
+
+

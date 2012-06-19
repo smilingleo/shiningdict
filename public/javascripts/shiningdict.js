@@ -1,19 +1,26 @@
 /*
 * Search dictionary
+* if word_in_book != null, it's used in book case, otherwise, in search page.
 */
-function search(){
-    var word = getCurrentWord();
+function search(word_in_book){
+    var word = word_in_book || getCurrentWord();
     $.get('/lookup/'+word, function(data){
-        
-        $('#translated_content > p')[0].innerHTML = data.content; // $('xxx') return an array
+        var pattern = new RegExp(word_in_book, "gi");
+        var translated = (word_in_book ? data.content.replace(pattern, '~') : data.content);
+        $('#translated_content > p')[0].innerHTML = translated; // $('xxx') return an array
 
-        // Focus on the input and select original word
-        $('#search_word')[0].focus();
-        $('#search_word')[0].select();
+        // refocus to search box if on search page.
+        if ($("#search_form").length > 0 ){
+            // Focus on the input and select original word
+            $('#search_word')[0].focus();
+            $('#search_word')[0].select();
 
-        //check if the word has already been added or not
-        if ($('#lb_user')[0].innerHTML)
-            $.get('/checkNewWord/' + word, changeAddedFlag);
+            //check if the word has already been added or not
+            if ($('#lb_user').length){
+                $.get('/checkNewWord/' + word, changeAddedFlag);
+            }
+        }
+
     });
 }
 
@@ -46,10 +53,8 @@ function signup(){
 function getCurrentWord(){
     return $("#search_word")[0].value;
 }
-
 /*
 * Change the flag of added sign
-* TODO: change to an icon
 */
 function changeAddedFlag(data){
     if (data.added)
@@ -64,9 +69,11 @@ function changeAddedFlag(data){
 ////////////////////////////////////////////////////////////
 
 $(document).ready(function() {
-    $("#search_form").submit(function(){
-        search();
-        return false;
-    });
-    $("#search_word")[0].focus();
+    if ($("#search_form").length > 0 ){
+        $("#search_form").submit(function(){
+            search();
+            return false;
+        });
+        $("#search_word")[0].focus();
+    }
 });
